@@ -18,19 +18,19 @@ pub fn keyboard_input_system(
 
         if keyboard_input.pressed(KeyCode::KeyW) {
             debug!("W was pressed");
-            direction.y += 1.0;
+            direction.x += 1.0;
         }
         if keyboard_input.pressed(KeyCode::KeyS) {
             debug!("S was pressed");
-            direction.y -= 1.0;
+            direction.x -= 1.0;
         }
         if keyboard_input.pressed(KeyCode::KeyA) {
             debug!("A was pressed");
-            direction.x -= 1.0;
+            direction.z -= 1.0;
         }
         if keyboard_input.pressed(KeyCode::KeyD) {
             debug!("D was pressed");
-            direction.x += 1.0;
+            direction.z += 1.0;
         }
 
         // normalize the direction vector to prevent diagonal movement being faster

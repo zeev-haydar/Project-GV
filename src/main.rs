@@ -1,12 +1,17 @@
 mod components;
 mod resources;
 mod systems;
+mod entities;
 
 use std::time::Duration;
-use bevy::color::palettes::css::RED;
 use bevy::prelude::*;
-use crate::components::player::{keyboard_input_system, player_position_info_system, Movement, Player, PlayerControlled};
-use crate::resources::DebugPrintTimer;
+use crate::entities::camera::spawn_camera;
+use crate::entities::ground::spawn_ground;
+use crate::entities::light::spawn_light;
+use crate::entities::player::spawn_player;
+use crate::resources::*;
+use crate::systems::camera::camera_follow_system;
+use crate::systems::player::*;
 
 fn hello_world() {
     println!("hello world!");
@@ -17,56 +22,23 @@ pub fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    // spawn camera
-    commands.spawn(
-        (
-            Camera3d::default(),
-            Transform::from_xyz(10.0, 12.0, 0.0)
-                .looking_at(Vec3::ZERO, Vec3::Y),
-        )
-    );
-
-    commands.spawn(
-        (
-            PointLight {
-                intensity: 1500.0,
-                shadows_enabled: true,
-                ..Default::default()
-            },
-            Transform::from_xyz(4.0, 8.0, 4.0),
-            )
-    );
-
-    // spawn a player entity
-    commands.spawn((
-            Player {
-                name: "Frieren".to_string(),
-            },
-            Transform::from_xyz(0.0, 0.0, 0.0),
-            Visibility::default(),
-            Mesh3d(meshes.add(Cuboid::default())),
-            MeshMaterial3d(materials.add(StandardMaterial {
-                base_color: RED.into(),
-                    ..Default::default()
-            })),
-            Movement {
-                speed: 10.0,
-            },
-            PlayerControlled,
-
-        ));
+    spawn_camera(&mut commands);
+    spawn_light(&mut commands);
+    spawn_ground(&mut commands, &mut meshes, &mut materials);
+    spawn_player(&mut commands, &mut meshes, &mut materials);
     }
 
 
 fn main() {
     let all_systems = (
         keyboard_input_system,
-        player_position_info_system
+        player_position_info_system,
+        camera_follow_system
     );
 
     App::new()
         .add_plugins(DefaultPlugins)
-        .insert_resource(DebugPrintTimer(Timer::new(Duration::from_millis(100), TimerMode::Repeating)))
+        .insert_resource(DebugPrintTimer(Timer::new(Duration::from_millis(500), TimerMode::Repeating)))
         .add_systems(Startup, setup)
         .add_systems(Update, all_systems)
         .run();

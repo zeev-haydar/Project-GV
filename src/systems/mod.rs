@@ -1,2 +1,2 @@
 pub mod player;
-mod camera;
+pub mod camera;
