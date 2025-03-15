@@ -6,8 +6,20 @@ pub struct Player {
     pub name: String,
 }
 
-#[derive(Component)]
-pub struct PlayerControlled;
+#[derive(Debug, Component)]
+pub struct JumpAbility {
+    pub is_jumping: bool,
+    pub is_grounded: bool,
+}
+
+impl Default for JumpAbility {
+    fn default() -> Self {
+        Self {
+            is_jumping: false,
+            is_grounded: false,
+        }
+    }
+}
 
 #[derive(Component)]
 pub struct Movement {

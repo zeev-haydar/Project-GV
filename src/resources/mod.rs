@@ -1,3 +1,6 @@
+pub mod camera;
+pub mod game;
+
 use bevy::prelude::*;
 
 #[derive(Resource)]

@@ -1,8 +1,11 @@
 use bevy::math::Vec3;
 use bevy::prelude::{Component};
 
-pub mod person;
 pub mod player;
+pub mod camera;
+pub mod text;
 
-#[derive(Component)]
-pub struct Id(i64);
+pub mod world;
+
+// #[derive(Component)]
+// pub struct Id(i64);
