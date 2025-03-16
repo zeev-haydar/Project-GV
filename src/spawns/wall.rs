@@ -4,6 +4,7 @@ use bevy::math::{Vec2, Vec3};
 use bevy::pbr::StandardMaterial;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
+use crate::components::world::NotGround;
 
 pub fn spawn_wall(
     commands: &mut Commands,
@@ -60,6 +61,11 @@ pub fn spawn_wall(
             Mesh3d(meshes.add(Cuboid::from_size(size))),
             MeshMaterial3d(wall_material.clone()),
             Collider::cuboid(size.x / 2.0, size.y / 2.0, size.z / 2.0),
+            Friction {
+                coefficient: 0.0,
+                combine_rule: CoefficientCombineRule::Min,
+            },
+            NotGround
         ));
     }
 }

@@ -20,6 +20,7 @@ pub fn spawn_ground(
             ..Default::default()
         })),
         Collider::cuboid(width / 2., 2., height / 2.),
+        RigidBody::Fixed,
         Ground // a component to tag this entity as ground
     ));
 }

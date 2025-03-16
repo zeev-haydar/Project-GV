@@ -15,7 +15,7 @@ pub struct JumpAbility {
 impl Default for JumpAbility {
     fn default() -> Self {
         Self {
-            is_jumping: false,
+            is_jumping: true,
             is_grounded: false,
         }
     }

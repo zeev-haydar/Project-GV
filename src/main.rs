@@ -19,7 +19,9 @@ use bevy_rapier3d::prelude::*;
 use bevy_rapier3d::render::RapierDebugRenderPlugin;
 use std::time::Duration;
 use bevy::window::{PresentMode, WindowMode};
+use crate::spawns::structures::spawn_boxes;
 use crate::spawns::wall::spawn_wall;
+use log::info;
 
 fn hello_world() {
     println!("hello world!");
@@ -35,10 +37,12 @@ pub fn setup(
     spawn_light(&mut commands);
     spawn_ground(&mut commands, &mut meshes, &mut materials, &world_attribute);
     spawn_player(&mut commands, &mut meshes, &mut materials);
-    spawn_wall(&mut commands, &mut meshes, &mut materials, &world_attribute)
+    spawn_wall(&mut commands, &mut meshes, &mut materials, &world_attribute);
+    spawn_boxes(&mut commands, &mut meshes, &mut materials);
 }
 
 fn main() {
+    env_logger::init();
     let all_systems = (
         player_position_info_system,
         camera_system,

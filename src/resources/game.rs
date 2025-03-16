@@ -42,7 +42,6 @@ impl Default for WorldAttribute {
             wall_thickness: 5.,
             wall_color: Color::from(MAROON),
             ground_color: Color::from(LIME_200)
-
         }
     }
 }

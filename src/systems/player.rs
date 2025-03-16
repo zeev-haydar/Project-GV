@@ -6,6 +6,7 @@ use bevy::math::Vec3;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use crate::components::world::Ground;
+use log::info;
 
 /**
 Read the keyboard event
@@ -52,7 +53,14 @@ pub fn keyboard_input_system(
             impulse.impulse = Vec3::new(0.0, 5.0, 0.0);
             jump_ability.is_jumping = true; // Mark as jumping
         }
+
+        if !jump_ability.is_jumping {
+            v.linvel.y = 0.0;
+        }
     }
+
+    // if it is not jumping
+
 
     // Check if the direction input is applied
     if input_dir != Vec3::ZERO {
@@ -99,41 +107,48 @@ pub fn player_game_state_system(
         return;
     };
 
-    game_state.position = player_transform.translation;
+    // game_state.position = player_transform.translation;
 }
 
 pub fn player_check_ground_system(
     mut collision_events: EventReader<CollisionEvent>,
-    mut player_query: Query<(Entity, &mut JumpAbility), With<Player>>,
+    mut player_query: Query<(Entity, &mut JumpAbility, &mut Velocity), With<Player>>,
     ground_query: Query<Entity, With<Ground>>
 ) {
-    let Ok((player_entity, mut jump_ability)) = player_query.get_single_mut() else {
-        return;
+    // Attempt to get the player entity
+    let Some((player_entity, mut jump_ability, mut velocity)) = player_query.get_single_mut().ok() else {
+        return; // If no player found, exit early
     };
-    let Ok(ground_entity) = ground_query.get_single() else {
-        return;
-    };
-    // println!("ini keprint");
+
     for collision_event in collision_events.read() {
-        println!("Received Collision Event: {:?}", collision_event);
+        if let CollisionEvent::Started(entity1, entity2, _) = collision_event {
+            println!("Collision detected: {:?} and {:?}", entity1, entity2);
 
-        match collision_event {
-            CollisionEvent::Started(entity1, entity2, _) => {
-                println!("entity1: {:?}, entity2: {:?}", entity1, entity2);
-
-
-                println!("Player Entity: {:?}, Ground Entity: {:?}", player_entity, ground_entity);
-
-                if (*entity1 == player_entity && *entity2 == ground_entity) || (*entity1 == ground_entity && *entity2 == player_entity) {
-                    println!("player touch ground");
-                    jump_ability.is_jumping = false;
-                    // jump_ability.is_grounded = true;
-                } else {
-                    println!("not collide with ground");
+            // Check if either entity is the player
+            if *entity1 == player_entity || *entity2 == player_entity {
+                // Check if the other entity is any ground entity
+                for ground_entity in ground_query.iter() {
+                    if *entity1 == ground_entity || *entity2 == ground_entity {
+                        println!("Player landed on the ground");
+                        jump_ability.is_jumping = false;
+                        velocity.linvel.y = 0.0; // auto disable any y velocity no matter what
+                        break; // No need to check further ground entities
+                    }
                 }
-
             }
-            _ => {}
         }
+
+        if let CollisionEvent::Stopped(entity1, entity2, _) = collision_event {
+            if *entity1 == player_entity || *entity2 == player_entity {
+                for ground_entity in ground_query.iter() {
+                    if *entity1 == ground_entity || *entity2 == ground_entity {
+                        println!("Player left the ground");
+                        jump_ability.is_jumping = true;
+                        break;
+                    }
+                }
+            }
+        }
+
     }
 }

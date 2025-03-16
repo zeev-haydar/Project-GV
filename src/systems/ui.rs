@@ -2,6 +2,7 @@ use std::collections::VecDeque;
 use std::time::Duration;
 use bevy::diagnostic::{Diagnostics, DiagnosticsStore, FrameTimeDiagnosticsPlugin};
 use bevy::prelude::*;
+use bevy::utils::info;
 use crate::components::player::Player;
 use crate::components::text::{FpsText, Info, InfoText};
 use crate::resources::game::GameState;
@@ -23,23 +24,27 @@ use crate::resources::game::GameState;
 
 pub fn update_player_info_system(
     mut info_text_query: Query<(&mut Text, &InfoText), With<InfoText>>,
-    game_state: Res<GameState>,
+    player_query: Query<(&Transform), With<Player>>,
     diagnostics: Res<DiagnosticsStore>,
 ) {
     for (mut text, info_text) in info_text_query.iter_mut() {
         match info_text.info {
-            Info::Position => update_position_text(&mut text, &game_state),
+            Info::Position => {
+                if let Ok(transform) = player_query.get_single() {
+                    update_position_text(&mut text, &transform)
+                }
+            },
             Info::FPS => update_fps_text(&mut text, &diagnostics),
         }
     }
 }
 
-fn update_position_text(text: &mut Text, game_state: &GameState) {
+fn update_position_text(text: &mut Text, transform: &Transform) {
     set_text(text, format!(
         "Position = {:.2} {:.2} {:.2}",
-        game_state.position.x,
-        game_state.position.y,
-        game_state.position.z
+        transform.translation.x,
+        transform.translation.y,
+        transform.translation.z
     ));
 }
 
@@ -48,7 +53,7 @@ fn update_fps_text(text: &mut Text, diagnostics: &DiagnosticsStore) {
     if let Some(fps) = diagnostics.get(&FrameTimeDiagnosticsPlugin::FPS)
         .and_then(|fps| fps.smoothed())
     {
-        set_text(text, format!("FPS: {:.2}", fps));
+        set_text(text, format!("FPS: {:.0}", fps));
     }
 }
 

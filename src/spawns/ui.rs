@@ -1,5 +1,6 @@
 use crate::components::text::*;
 use bevy::color::palettes::basic::BLACK;
+use bevy::color::palettes::css::ORANGE;
 use bevy::prelude::*;
 
 pub fn setup_debug_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -31,7 +32,7 @@ pub fn setup_debug_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
             parent.spawn((
                 Text::new("Player Info"),
                 text_font.clone(),
-                TextColor(BLACK.into()),
+                TextColor(ORANGE.into()),
                 InfoText {
                     info: Info::Position
                 },
@@ -39,7 +40,7 @@ pub fn setup_debug_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
             parent.spawn((
                 Text::new("FPS"),
                 text_font.clone(),
-                TextColor(BLACK.into()),
+                TextColor(ORANGE.into()),
                 InfoText {
                     info: Info::FPS
                 },
