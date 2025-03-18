@@ -4,6 +4,16 @@ use bevy::prelude::*;
 #[derive(Component)]
 pub struct Player {
     pub name: String,
+    camera_direction: Vec3,
+}
+
+impl Player {
+    pub fn new(name: String) -> Self {
+        Self {
+            name,
+            camera_direction: Vec3::Z,
+        }
+    }
 }
 
 #[derive(Debug, Component)]

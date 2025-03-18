@@ -2,7 +2,7 @@ use crate::resources::game::WorldAttribute;
 use bevy::color::palettes::css::LIME;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::components::world::Ground;
+use crate::components::world::{AabbCollider, Ground};
 
 pub fn spawn_ground(
     commands: &mut Commands,
@@ -21,6 +21,9 @@ pub fn spawn_ground(
         })),
         Collider::cuboid(width / 2., 2., height / 2.),
         RigidBody::Fixed,
-        Ground // a component to tag this entity as ground
+        Ground, // a component to tag this entity as ground
+        AabbCollider {
+            half_extents: Vec3::new(width / 2.0, 1.5, height / 2.0),
+        }
     ));
 }

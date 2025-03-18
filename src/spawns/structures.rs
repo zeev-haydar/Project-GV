@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::components::world::{Ground, Name, NotGround, Structure};
+use crate::components::world::{AabbCollider, Ground, Name, NotGround, Structure};
 
 pub fn spawn_box(
     commands: &mut Commands,
@@ -36,45 +36,53 @@ pub fn spawn_box(
                 Ground,
                 Collider::cuboid(size.x/2., size.y/2., size.z/2.),
                 RigidBody::Fixed,
-            )
-    ).with_children(|parent| {
-        // spawn collider for box as Structure
-        let ground_layer_thickness: f32 = 0.05;
-
-        // This is the "Not Ground" part of the box
-        parent.spawn(
-            (
-                Transform::from_xyz(0.0, -ground_layer_thickness, 0.0),
-                NotGround,
-                Friction {
-                    coefficient: 0.0,
-                    combine_rule: CoefficientCombineRule::Min,
-                },
-                Restitution {
-                    coefficient: 0.0, // No bounciness
-                    combine_rule: CoefficientCombineRule::Min,
-                },
-                Collider::cuboid(size.x/2.,(size.y-ground_layer_thickness)/2., size.z/2.)
-            )
-        );
-
-        // This is the "Ground" part of the box
-        parent.spawn(
-            (
-                Transform::from_xyz(0.0, (size.y-ground_layer_thickness)/2.,0.0),
-                Ground,
-                Friction {
-                    coefficient: 0.0,
-                    combine_rule: CoefficientCombineRule::Min,
-                },
-                Restitution {
-                    coefficient: 0.0, // No bounciness
-                    combine_rule: CoefficientCombineRule::Min,
-                },
-                Collider::cuboid(size.x/2.,ground_layer_thickness/2., size.z/2.),
-                )
-        );
-    });
+                AabbCollider {
+                    half_extents: Vec3::new(size.x / 2.0, size.y/2., size.z / 2.0),
+                }
+            ));
+    // ).with_children(|parent| {
+    //     // spawn collider for box as Structure
+    //     let ground_layer_thickness: f32 = 0.05;
+    //
+    //     // This is the "Not Ground" part of the box
+    //     parent.spawn(
+    //         (
+    //             Transform::from_xyz(0.0, -ground_layer_thickness, 0.0),
+    //             NotGround,
+    //             Friction {
+    //                 coefficient: 0.0,
+    //                 combine_rule: CoefficientCombineRule::Min,
+    //             },
+    //             Restitution {
+    //                 coefficient: 0.0, // No bounciness
+    //                 combine_rule: CoefficientCombineRule::Min,
+    //             },
+    //             Collider::cuboid(size.x/2.,(size.y-ground_layer_thickness)/2., size.z/2.)
+    //         )
+    //     );
+    //
+    //     // This is the "Ground" part of the box
+    //     parent.spawn(
+    //         (
+    //             Transform::from_xyz(0.0, (size.y-ground_layer_thickness)/2.,0.0),
+    //             Ground,
+    //             Friction {
+    //                 coefficient: 0.0,
+    //                 combine_rule: CoefficientCombineRule::Min,
+    //             },
+    //             Restitution {
+    //                 coefficient: 0.0, // No bounciness
+    //                 combine_rule: CoefficientCombineRule::Min,
+    //             },
+    //             Collider::cuboid(size.x/2.,ground_layer_thickness/2., size.z/2.),
+    //             AabbCollider {
+    //                 half_extents: Vec3::new(size.x/2.,ground_layer_thickness/2., size.z/2.),
+    //             }
+    //             ),
+    //
+    //
+    //     );
+    // });
 }
 
 pub fn spawn_boxes(

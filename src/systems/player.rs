@@ -1,3 +1,4 @@
+use bevy::ecs::observer::TriggerTargets;
 use crate::components::player::*;
 use crate::resources::game::GameState;
 use crate::resources::DebugPrintTimer;
@@ -5,8 +6,8 @@ use bevy::input::ButtonInput;
 use bevy::math::Vec3;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::components::world::Ground;
-use log::info;
+use crate::components::world::{ray_intersect_aabb, AabbCollider, Ground};
+use bevy_rapier3d::math::Real;
 
 /**
 Read the keyboard event
@@ -50,13 +51,14 @@ pub fn keyboard_input_system(
     // Check if it is jumping
     if let Some(mut jump_ability) = jump_ability_opt {
         if keyboard_input.just_pressed(KeyCode::Space) && !jump_ability.is_jumping {
-            impulse.impulse = Vec3::new(0.0, 5.0, 0.0);
-            jump_ability.is_jumping = true; // Mark as jumping
-        }
-
-        if !jump_ability.is_jumping {
             v.linvel.y = 0.0;
+            impulse.impulse = Vec3::new(0.0, 10.0, 0.0);
+            jump_ability.is_jumping = true;
         }
+        // else if !jump_ability.is_jumping {
+        //         v.linvel.y = 0.0;
+        // }
+
     }
 
     // if it is not jumping
@@ -152,3 +154,69 @@ pub fn player_check_ground_system(
 
     }
 }
+
+// pub fn player_check_ground_system_with_raycast(
+//     rapier_context: ReadDefaultRapierContext,
+//     // This query will be used to check if the hit entity is tagged as "Ground"
+//     ground_query: Query<&Ground>,
+//     mut player_query: Query<(&Transform, &mut JumpAbility), With<Player>>,
+// ) {
+//     let ray_length: Real = 2.0;
+//
+//     for (player_transform, mut jump_ability) in player_query.iter_mut() {
+//         let ray_pos = player_transform.translation;
+//         let ray_dir = Vec3::new(0.0, -1.0, 0.0);
+//
+//         // Cast the ray
+//         if let Some((hit_entity, _toi )) = rapier_context.cast_ray(
+//             ray_pos,
+//             ray_dir,
+//             ray_length,
+//             true,
+//             QueryFilter::default(),
+//         ) {
+//             // println!("ini keprint");
+//             let hit_point = ray_pos + ray_dir;
+//             // println!("Entity {:?} hit at point {}", hit_entity, hit_point);
+//             if ground_query.get(hit_entity).is_ok() {
+//                 println!("ini keprint");
+//                 jump_ability.is_jumping = false;
+//             }
+//         }
+//     }
+// }
+
+pub fn update_jump_state_system(
+    mut player_query: Query<(&Transform, &mut JumpAbility), With<Player>>,
+    ground_query: Query<(&Transform, &AabbCollider)>, // All ground objects must have AabbCollider
+) {
+    // Adjust the ray length to be slightly longer than half the player's height.
+    let ray_length = 1.334;
+    // We're casting the ray downward.
+    let ray_direction = Vec3::NEG_Y; // (0, -1, 0)
+
+    for (player_transform, mut jump_ability) in player_query.iter_mut() {
+        let ray_origin = player_transform.translation;
+        let mut grounded = false;
+
+        // Check against each ground entity.
+        for (ground_transform, aabb) in ground_query.iter() {
+            // The AABB is defined by the ground entity's translation (center) and its half extents.
+            if let Some(t) = ray_intersect_aabb(
+                ray_origin,
+                ray_direction,
+                ground_transform.translation,
+                aabb.half_extents,
+            ) {
+                // If intersection occurs within ray_length, consider the player grounded.
+                if t >= 0.0 && t <= ray_length {
+                    grounded = true;
+                    break;
+                }
+            }
+        }
+        jump_ability.is_jumping = !grounded;
+    }
+}
+
+

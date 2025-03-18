@@ -1,9 +1,12 @@
+use std::f32::consts::FRAC_PI_2;
 use crate::components::camera::{CameraSensitivity, PlayerCamera};
 use crate::components::player::{JumpAbility, Movement, Player};
 use bevy::color::palettes::css::RED;
+use bevy::input::mouse::AccumulatedMouseMotion;
 use bevy::prelude::*;
+use bevy_rapier3d::prelude::{RapierContext};
 use bevy_rapier3d::prelude::*;
-
+use crate::resources::camera::CameraState;
 pub fn spawn_player(
     commands: &mut Commands,
     meshes: &mut ResMut<Assets<Mesh>>,
@@ -11,9 +14,7 @@ pub fn spawn_player(
 ) {
     commands
         .spawn((
-            Player {
-                name: "Frieren".to_string(),
-            },
+            Player::new("Frieren".to_string()),
             Transform::from_xyz(0.0, 5., 0.0),
             Visibility::default(),
             Mesh3d(meshes.add(Cuboid::default())),
@@ -21,7 +22,7 @@ pub fn spawn_player(
                 base_color: RED.into(),
                 ..Default::default()
             })),
-            Movement { speed: 10.0 },
+            Movement { speed: 20.0 },
             CameraSensitivity::default(),
             Collider::cuboid(0.5, 0.5, 0.5),
             RigidBody::Dynamic,
@@ -31,7 +32,7 @@ pub fn spawn_player(
                 angvel: Vec3::ZERO,
             },
             Friction::coefficient(0.0),
-            GravityScale(1.0),
+            GravityScale(2.0),
             LockedAxes::ROTATION_LOCKED,
             JumpAbility::default(),
         ))
@@ -40,6 +41,7 @@ pub fn spawn_player(
         .insert(ActiveCollisionTypes::default())
         .with_children(|parent| {
             parent.spawn((
+                Transform::from_xyz(0., 1.5, 0.),
                 PlayerCamera,
                 Camera3d::default(),
                 Projection::from(PerspectiveProjection {
@@ -49,3 +51,4 @@ pub fn spawn_player(
             ));
         });
 }
+

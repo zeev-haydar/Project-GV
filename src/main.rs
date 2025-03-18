@@ -22,6 +22,7 @@ use bevy::window::{PresentMode, WindowMode};
 use crate::spawns::structures::spawn_boxes;
 use crate::spawns::wall::spawn_wall;
 use log::info;
+use crate::systems::window::{hide_cursor, toggle_cursor};
 
 fn hello_world() {
     println!("hello world!");
@@ -42,17 +43,20 @@ pub fn setup(
 }
 
 fn main() {
-    env_logger::init();
     let all_systems = (
         player_position_info_system,
         camera_system,
         toggle_camera_mode_system,
         player_game_state_system,
         update_player_info_system,
+        toggle_cursor,
+        // player_check_ground_system_with_raycast,
+        // player_check_ground_system,
+
     );
 
     let game_systems = (
-            player_check_ground_system,
+            update_jump_state_system,
             keyboard_input_system,
         ).chain();
 
@@ -79,7 +83,7 @@ fn main() {
         .insert_resource(WorldAttribute::default())
         .init_resource::<CameraState>()
         .init_resource::<GameState>()
-        .add_systems(Startup, setup)
+        .add_systems(Startup, (setup, hide_cursor))
         .add_systems(Startup, (setup_debug_ui, setup_game_ui).chain())
         .add_systems(Update, all_systems)
         .add_systems(Update, game_systems)
