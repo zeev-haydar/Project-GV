@@ -112,7 +112,7 @@ pub fn setup_game_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                         align_items: AlignItems::Center,
                         width: Val::Px(50.),
                         height: Val::Px(50.),
-                        border: UiRect::all(Val::Px(5.0)),
+                        border: UiRect::all(Val::Px(2.5)),
                         ..Default::default()
                     },
                     BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 0.5).into()),

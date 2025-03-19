@@ -1,5 +1,5 @@
 use crate::components::camera::{CameraSensitivity, PlayerCamera};
-use crate::components::player::{JumpAbility, Movement, Player};
+use crate::components::player::{JumpAbility, PlayerStats, Player};
 use crate::components::world::Name;
 use bevy::color::palettes::css::RED;
 use bevy::prelude::*;
@@ -14,7 +14,7 @@ struct PlayerBundle {
     visibility: Visibility,
     mesh: Mesh3d,
     material: MeshMaterial3d<StandardMaterial>,
-    movement: Movement,
+    movement: PlayerStats,
     camera_sensitivity: CameraSensitivity,
     collider: Collider,
     rigid_body: RigidBody,
@@ -43,7 +43,7 @@ pub fn spawn_player(
                 base_color: RED.into(),
                 ..Default::default()
             })),
-            movement: Movement { speed: 15.0 },
+            movement: PlayerStats { speed: 15.0, ..Default::default() },
             camera_sensitivity: CameraSensitivity::default(),
             collider: Collider::cuboid(0.5, 0.5, 0.5),
             rigid_body: RigidBody::Dynamic,
@@ -71,4 +71,12 @@ pub fn spawn_player(
                 }),
             ));
         });
+}
+
+pub fn spawn_random_item(
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+) {
+
 }

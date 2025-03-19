@@ -18,14 +18,17 @@ use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use bevy_rapier3d::render::RapierDebugRenderPlugin;
 use std::time::Duration;
-use bevy::window::{PresentMode, WindowMode};
+use bevy::window::{PresentMode, PrimaryWindow, WindowMode};
 use crate::spawns::structures::spawn_boxes;
 use crate::spawns::wall::spawn_wall;
-use log::info;
 use crate::systems::window::{hide_cursor, toggle_cursor};
 
-fn hello_world() {
-    println!("hello world!");
+
+fn maximize_window(mut windows: Query<&mut Window, With<PrimaryWindow>>) {
+    if let Ok(mut window) = windows.get_single_mut() {
+        window.set_maximized(true);
+    }
+
 }
 
 pub fn setup(
@@ -55,20 +58,20 @@ fn main() {
 
     let game_systems = (
             update_jump_state_system,
-            keyboard_input_system,
+            player_movement_system,
         ).chain();
 
     App::new()
         .add_plugins((
-            // DefaultPlugins.set(WindowPlugin {
-            //     primary_window: Some(Window {
-            //         mode: WindowMode::Fullscreen(MonitorSelection::Primary),
-            //         present_mode: PresentMode::AutoVsync,
-            //         ..default()
-            //     }),
-            //     ..default()
-            // }),
-            DefaultPlugins,
+            DefaultPlugins.set(WindowPlugin {
+                primary_window: Some(Window {
+                    mode: WindowMode::Windowed,
+                    present_mode: PresentMode::AutoVsync,
+                    ..default()
+                }),
+                ..default()
+            }),
+            // DefaultPlugins,
             FrameTimeDiagnosticsPlugin,
             RapierPhysicsPlugin::<NoUserData>::default(),
             RapierDebugRenderPlugin::default(),
@@ -81,7 +84,7 @@ fn main() {
         .insert_resource(WorldAttribute::default())
         .init_resource::<CameraState>()
         .init_resource::<GameState>()
-        .add_systems(Startup, (setup, hide_cursor))
+        .add_systems(Startup, (maximize_window, setup, hide_cursor))
         .add_systems(Startup, (setup_debug_ui, setup_game_ui).chain())
         .add_systems(Update, all_systems)
         .add_systems(Update, game_systems)
