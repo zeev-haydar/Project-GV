@@ -3,7 +3,7 @@ use bevy::prelude::{Component};
 
 pub mod player;
 pub mod camera;
-pub mod text;
+pub mod ui;
 
 pub mod world;
 

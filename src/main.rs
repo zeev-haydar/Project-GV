@@ -44,10 +44,8 @@ pub fn setup(
 
 fn main() {
     let all_systems = (
-        player_position_info_system,
         camera_system,
         toggle_camera_mode_system,
-        player_game_state_system,
         update_player_info_system,
         toggle_cursor,
         // player_check_ground_system_with_raycast,

@@ -13,3 +13,7 @@ pub struct InfoText {
 
 #[derive(Debug, Component)]
 pub struct FpsText;
+
+/// Component to mark the UI node that displays the inventory.
+#[derive(Component)]
+pub struct InventoryUI;

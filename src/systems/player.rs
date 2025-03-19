@@ -1,13 +1,10 @@
-use bevy::ecs::observer::TriggerTargets;
-use crate::components::player::*;
-use crate::resources::game::GameState;
-use crate::resources::DebugPrintTimer;
+use crate::components::{player::*, world::*};
+// use crate::resources::game::GameState;
+// use crate::resources::DebugPrintTimer;
 use bevy::input::ButtonInput;
 use bevy::math::Vec3;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::components::world::{ray_intersect_aabb, AabbCollider, Ground};
-use bevy_rapier3d::math::Real;
 
 /**
 Read the keyboard event
@@ -21,15 +18,14 @@ pub fn keyboard_input_system(
             &Movement,
             &mut Velocity,
             &mut ExternalImpulse,
-            Option<&mut JumpAbility>
+            Option<&mut JumpAbility>,
         ),
         With<Player>,
     >,
 ) {
-    let Ok((
-               mut transform, movement,
-               mut v, mut impulse,
-               jump_ability_opt)) = player_query.get_single_mut() else {
+    let Ok((mut transform, movement, mut v, mut impulse, jump_ability_opt)) =
+        player_query.get_single_mut()
+    else {
         return;
     };
     let mut input_dir = Vec3::ZERO;
@@ -47,7 +43,6 @@ pub fn keyboard_input_system(
         input_dir.x += 1.0
     }
 
-
     // Check if it is jumping
     if let Some(mut jump_ability) = jump_ability_opt {
         if keyboard_input.just_pressed(KeyCode::Space) && !jump_ability.is_jumping {
@@ -58,11 +53,9 @@ pub fn keyboard_input_system(
         // else if !jump_ability.is_jumping {
         //         v.linvel.y = 0.0;
         // }
-
     }
 
     // if it is not jumping
-
 
     // Check if the direction input is applied
     if input_dir != Vec3::ZERO {
@@ -85,40 +78,30 @@ pub fn keyboard_input_system(
     }
 }
 
-pub fn player_position_info_system(
-    mut query: Query<(&Transform, &Player), With<Player>>,
-    time: Res<Time>,
-    mut timer: ResMut<DebugPrintTimer>,
-) {
-    return;
-    // Only run the logic if the timer finished
-    if timer.0.tick(time.delta()).just_finished() {
-        for (transform, player) in query.iter() {
-            print!("Player name: {}", player.name);
-            print!(", ");
-            println!("Position: {:?}", transform.translation.to_string());
-        }
-    }
-}
-
-pub fn player_game_state_system(
-    player_query: Query<&Transform, With<Player>>,
-    mut game_state: ResMut<GameState>,
-) {
-    let Ok(player_transform) = player_query.get_single() else {
-        return;
-    };
-
-    // game_state.position = player_transform.translation;
-}
+// pub fn player_position_info_system(
+//     mut query: Query<(&Transform, &Player), With<Player>>,
+//     time: Res<Time>,
+//     mut timer: ResMut<DebugPrintTimer>,
+// ) {
+//     return;
+//     // Only run the logic if the timer finished
+//     if timer.0.tick(time.delta()).just_finished() {
+//         for (transform, player) in query.iter() {
+//             print!("Player name: {}", player.name);
+//             print!(", ");
+//             println!("Position: {:?}", transform.translation.to_string());
+//         }
+//     }
+// }
 
 pub fn player_check_ground_system(
     mut collision_events: EventReader<CollisionEvent>,
     mut player_query: Query<(Entity, &mut JumpAbility, &mut Velocity), With<Player>>,
-    ground_query: Query<Entity, With<Ground>>
+    ground_query: Query<Entity, With<Ground>>,
 ) {
     // Attempt to get the player entity
-    let Some((player_entity, mut jump_ability, mut velocity)) = player_query.get_single_mut().ok() else {
+    let Some((player_entity, mut jump_ability, mut velocity)) = player_query.get_single_mut().ok()
+    else {
         return; // If no player found, exit early
     };
 
@@ -151,7 +134,6 @@ pub fn player_check_ground_system(
                 }
             }
         }
-
     }
 }
 
@@ -186,29 +168,68 @@ pub fn player_check_ground_system(
 //     }
 // }
 
+// pub fn update_jump_state_system(
+//     mut player_query: Query<(&Transform, &mut JumpAbility), With<Player>>,
+//     ground_query: Query<(&Transform, &AabbCollider)>, // All ground objects must have AabbCollider
+// ) {
+//     // Adjust the ray length to be slightly longer than half the player's height.
+//     let ray_length = 1.334;
+//     // We're casting the ray downward.
+//     let ray_direction = Vec3::NEG_Y; // (0, -1, 0)
+
+//     for (player_transform, mut jump_ability) in player_query.iter_mut() {
+//         // let ray_origin = player_transform.translation;
+//         let mut grounded = false;
+
+//         // Check against each ground entity.
+//         for (ground_transform, aabb) in ground_query.iter() {
+//             // The AABB is defined by the ground entity's translation (center) and its half extents.
+//             if let Some(t) = multi_ray_intersect_bottom_aabb(
+//                 ground_transform.translation,
+//                 aabb.half_extents,
+//                 0.1,
+//             ) {
+//                 println!("Ray hit at distance: {}", t);
+//                 // If intersection occurs within ray_length, consider the player grounded.
+//                 if t >= 0.0 && t <= ray_length {
+//                     grounded = true;
+//                     break;
+//                 }
+//             }
+//         }
+//         jump_ability.is_jumping = !grounded;
+//     }
+// }
+
+/// System that updates the player's jump state by checking if the player is "grounded"
+/// via raycasts cast from the bottom of the player's collider box.
 pub fn update_jump_state_system(
     mut player_query: Query<(&Transform, &mut JumpAbility), With<Player>>,
-    ground_query: Query<(&Transform, &AabbCollider)>, // All ground objects must have AabbCollider
+    ground_query: Query<(&Transform, &AabbCollider)>, // All ground objects must have an AabbCollider
 ) {
     // Adjust the ray length to be slightly longer than half the player's height.
-    let ray_length = 1.334;
-    // We're casting the ray downward.
-    let ray_direction = Vec3::NEG_Y; // (0, -1, 0)
+    let ray_length = 0.5;
+    // Force the ray direction to be downward.
+    let ray_direction = Vec3::NEG_Y;
+
+    // In this example we assume a fixed box for the player.
+    // In a real scenario, this might be part of a collider component.
+    let player_half_extents = Vec3::new(0.5, 0.5, 0.5);
 
     for (player_transform, mut jump_ability) in player_query.iter_mut() {
-        let ray_origin = player_transform.translation;
         let mut grounded = false;
 
-        // Check against each ground entity.
-        for (ground_transform, aabb) in ground_query.iter() {
-            // The AABB is defined by the ground entity's translation (center) and its half extents.
-            if let Some(t) = ray_intersect_aabb(
-                ray_origin,
+        // Check each ground entity.
+        for (ground_transform, ground_collider) in ground_query.iter() {
+            if let Some(t) = multi_ray_intersect_from_box(
+                player_transform.translation, // Player's box center
+                player_half_extents,          // Player's half extents
+                ground_transform.translation, // Ground's box center
+                ground_collider.half_extents, // Ground's half extents
+                0.1,                          // Step size for sampling
                 ray_direction,
-                ground_transform.translation,
-                aabb.half_extents,
             ) {
-                // If intersection occurs within ray_length, consider the player grounded.
+                // println!("Ray hit at distance: {}", t);
                 if t >= 0.0 && t <= ray_length {
                     grounded = true;
                     break;
@@ -218,5 +239,3 @@ pub fn update_jump_state_system(
         jump_ability.is_jumping = !grounded;
     }
 }
-
-

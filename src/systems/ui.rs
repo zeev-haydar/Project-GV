@@ -4,7 +4,7 @@ use bevy::diagnostic::{Diagnostics, DiagnosticsStore, FrameTimeDiagnosticsPlugin
 use bevy::prelude::*;
 use bevy::utils::info;
 use crate::components::player::Player;
-use crate::components::text::{FpsText, Info, InfoText};
+use crate::components::ui::{FpsText, Info, InfoText};
 use crate::resources::game::GameState;
 
 // pub fn update_debug_info_system(
