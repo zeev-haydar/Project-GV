@@ -117,6 +117,7 @@ pub fn setup_game_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                     },
                     BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 0.5).into()),
                     BorderColor(Color::WHITE.into()),
+                    InventorySlot {slot}
                 ));
             }
         });

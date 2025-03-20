@@ -2,9 +2,12 @@ use crate::components::{player::*, world::*};
 // use crate::resources::game::GameState;
 // use crate::resources::DebugPrintTimer;
 use bevy::input::ButtonInput;
+use bevy::input::mouse::{MouseScrollUnit, MouseWheel};
 use bevy::math::Vec3;
 use bevy::prelude::*;
+use bevy::text::cosmic_text::Scroll;
 use bevy_rapier3d::prelude::*;
+use bevy_rapier3d::rapier::prelude::CollisionEventFlags;
 
 /**
 Read the keyboard event
@@ -69,8 +72,8 @@ pub fn player_movement_system(
         move_direction.y = 0.0;
 
         // Update velocity based on input
-        let dx = move_direction.x * movement.speed * time.delta_secs() * 50.0;
-        let dz = move_direction.z * movement.speed * time.delta_secs() * 50.0;
+        let dx = move_direction.x * movement.speed;
+        let dz = move_direction.z * movement.speed;
         v.linvel = Vec3::new(dx, v.linvel.y, dz);
     } else {
         // No input detected; set velocity to zero
@@ -78,7 +81,7 @@ pub fn player_movement_system(
     }
 }
 
-fn use_item_system(
+pub fn use_item_system(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut commands: Commands,
     mut player_query: Query<(Entity, &mut Inventory, &mut PlayerStats), With<Player>>,
@@ -90,7 +93,34 @@ fn use_item_system(
     }
 }
 
-fn speed_boost_system(
+pub fn change_selected_item_system(
+    mut inventory_query: Query<&mut Inventory, With<Player>>,
+    mut scroll_events: EventReader<MouseWheel>,
+) {
+    for mut inventory in inventory_query.iter_mut() {
+        for event in scroll_events.read() {
+            match event.unit {
+                MouseScrollUnit::Line => {
+                    if event.y > 0.0 {
+                        // Scroll up: Move to the next item
+                        inventory.current_selected_item =
+                            (inventory.current_selected_item + 1) % inventory.slots.len();
+                    } else if event.y < 0.0 {
+                        // Scroll down: Move to the previous item (wrapping around)
+                        inventory.current_selected_item = (inventory.current_selected_item + inventory.slots.len() - 1) % inventory.slots.len();
+                    }
+                    // println!(
+                    //     "Selected item index: {}",
+                    //     inventory.current_selected_item
+                    // );
+                }
+                _ => {}
+            }
+        }
+    }
+}
+
+pub fn speed_boost_system(
     mut commands: Commands,
     time: Res<Time>,
     mut player_query: Query<(Entity, &mut PlayerStats, &mut SpeedBoost)>,
@@ -143,7 +173,7 @@ pub fn update_jump_state_system(
         for (ground_transform, ground_collider) in ground_query.iter() {
             if let Some(t) = multi_ray_intersect_from_box(
                 player_transform.translation,
-                player_half_extents,      
+                player_half_extents,
                 ground_transform.translation,
                 ground_collider.half_extents,
                 0.025,
@@ -157,5 +187,60 @@ pub fn update_jump_state_system(
             }
         }
         jump_ability.is_jumping = !grounded;
+    }
+}
+
+pub fn check_item_intersections(
+    mut commands: Commands,
+    mut collider_events: EventReader<CollisionEvent>,
+    mut player_query: Query<(Entity, &Transform, &Player, &EntityName, &mut PlayerStats, &mut Inventory)>,
+    mut item_query: Query<(Entity, &Item, &Transform)>,
+) {
+    for event in collider_events.read() {
+        match event {
+            CollisionEvent::Started(entity1, entity2, flag) if *flag == CollisionEventFlags::SENSOR => {
+                if let Ok((_, _, _, player_name,_, mut inventory)) =
+                    player_query.get_mut(*entity1)
+                {
+                    if let Ok((item_entity, item, _)) = item_query.get_mut(*entity2) {
+                        println!("Player {:?} collided with item '{}'", player_name, item.name);
+
+                        // Pick up  the item
+                        match inventory.add_item(item.clone()) {
+                            Ok(())=> {
+                                println!("Item '{}' added to inventory.", item.name);
+
+                                // Remove item from the world
+                                commands.entity(item_entity).despawn_recursive();
+                            }
+                            Err(_) => {
+                                println!("Inventory is full!");
+                            }
+                        }
+                    }
+                }
+                else if let Ok((_player_entity, _player_transform, _player, player_name, mut _player_stats, mut inventory)) =
+                    player_query.get_mut(*entity2)
+                {
+                    if let Ok((item_entity, item, item_transform)) = item_query.get_mut(*entity1) {
+                        println!("Player {:?} collided with item '{}'", player_name, item.name);
+
+                        // Pick up the item
+                        match inventory.add_item(item.clone()) {
+                            Ok(())=> {
+                                println!("Item '{}' added to inventory.", item.name);
+
+                                // Remove item from the world
+                                commands.entity(item_entity).despawn_recursive();
+                            }
+                            Err(_) => {
+                                println!("Inventory is full!");
+                            }
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
     }
 }

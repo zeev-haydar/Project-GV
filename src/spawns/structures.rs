@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
-use crate::components::world::{AabbCollider, Ground, Name, NotGround, Structure};
+use crate::components::world::{AabbCollider, Ground, EntityName, NotGround, Structure};
 
 pub fn spawn_box(
     commands: &mut Commands,
@@ -19,24 +19,24 @@ pub fn spawn_box(
 
     commands.spawn(
         (
-                Transform::from_xyz(position.x, position.y+y_offset, position.z),
-                Mesh3d(mesh.clone()),
-                MeshMaterial3d(material.clone()),
-                Name::new("Box"),
-                Visibility::default(),
-                Structure,
-                Friction {
+            Transform::from_xyz(position.x, position.y+y_offset, position.z),
+            Mesh3d(mesh.clone()),
+            MeshMaterial3d(material.clone()),
+            EntityName::new("Box"),
+            Visibility::default(),
+            Structure,
+            Friction {
                     coefficient: 0.0,
                     combine_rule: CoefficientCombineRule::Min,
                 },
-                Restitution {
+            Restitution {
                     coefficient: 0.0,
                         ..default()
                 },
-                Ground,
-                Collider::cuboid(size.x/2., size.y/2., size.z/2.),
-                RigidBody::Fixed,
-                AabbCollider {
+            Ground,
+            Collider::cuboid(size.x/2., size.y/2., size.z/2.),
+            RigidBody::Fixed,
+            AabbCollider {
                     half_extents: Vec3::new(size.x / 2.0, size.y/2., size.z / 2.0),
                 }
             ));
@@ -92,7 +92,7 @@ pub fn spawn_boxes(
 ) {
     let position1 = Vec3::new(10.5, 1.5, -10.5);
     let position2 = Vec3::new(20.0, 1.5, 20.0);
-    let size: Vec3 = Vec3::new(3.0, 3.0, 3.0);
+    let size: Vec3 = Vec3::new(6.0, 2.0, 6.0);
     let color: Color = Color::WHITE;
     spawn_box(commands, meshes, materials, &position1, &color,&size);
     spawn_box(commands, meshes, materials, &position2, &color,&size);

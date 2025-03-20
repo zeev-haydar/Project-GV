@@ -1,6 +1,6 @@
 use crate::components::camera::{CameraSensitivity, PlayerCamera};
-use crate::components::player::{JumpAbility, PlayerStats, Player};
-use crate::components::world::Name;
+use crate::components::player::{Inventory, JumpAbility, Player, PlayerStats};
+use crate::components::world::EntityName;
 use bevy::color::palettes::css::RED;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
@@ -8,7 +8,7 @@ use bevy_rapier3d::prelude::*;
 #[derive(Bundle)]
 struct PlayerBundle {
     player: Player,
-    name: Name,
+    name: EntityName,
     transform: Transform,
     global_transform: GlobalTransform,
     visibility: Visibility,
@@ -34,7 +34,7 @@ pub fn spawn_player(
     commands
         .spawn(PlayerBundle {
             player: Player,
-            name: Name::new("Frieren"),
+            name: EntityName::new("Frieren"),
             global_transform: GlobalTransform::default(),
             transform: Transform::from_xyz(0.0, 5., 0.0),
             visibility: Visibility::default(),
@@ -53,20 +53,25 @@ pub fn spawn_player(
                 angvel: Vec3::ZERO,
             },
             friction: Friction::coefficient(0.0),
-            gravity_scale: GravityScale(1.5),
+            gravity_scale: GravityScale(2.0),
             locked_axes: LockedAxes::ROTATION_LOCKED,
             jump_ability: JumpAbility::default(),
         })
         .insert(ExternalImpulse::default())
         .insert(ActiveEvents::COLLISION_EVENTS)
         .insert(ActiveCollisionTypes::default())
+        .insert(Inventory::new())
+        .insert(CollisionGroups::new(
+            Group::GROUP_1,
+            Group::GROUP_2,
+        ))
         .with_children(|parent| {
             parent.spawn((
                 Transform::from_xyz(0., 1.5, 0.),
                 PlayerCamera,
                 Camera3d::default(),
                 Projection::from(PerspectiveProjection {
-                    fov: 90.0_f32.to_radians(),
+                    fov: 80_f32.to_radians(),
                     ..Default::default()
                 }),
             ));

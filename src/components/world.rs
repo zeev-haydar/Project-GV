@@ -8,9 +8,9 @@ pub struct Ground;
 This component is used to name an entity
 */
 #[derive(Debug, Component)]
-pub struct Name(String);
+pub struct EntityName(String);
 
-impl Name {
+impl EntityName {
     pub fn new(name: &str) -> Self {
         Self(String::from(name))
     }

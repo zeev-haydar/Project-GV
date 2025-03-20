@@ -12,13 +12,14 @@ use crate::spawns::player::spawn_player;
 use crate::spawns::ui::{setup_debug_ui, setup_game_ui};
 use crate::systems::camera::*;
 use crate::systems::player::*;
-use crate::systems::ui::update_player_info_system;
+use crate::systems::ui::{update_inventory_ui_system, update_player_info_system};
 use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 use bevy_rapier3d::render::RapierDebugRenderPlugin;
 use std::time::Duration;
 use bevy::window::{PresentMode, PrimaryWindow, WindowMode};
+use crate::spawns::item::spawn_items;
 use crate::spawns::structures::spawn_boxes;
 use crate::spawns::wall::spawn_wall;
 use crate::systems::window::{hide_cursor, toggle_cursor};
@@ -51,14 +52,17 @@ fn main() {
         toggle_camera_mode_system,
         update_player_info_system,
         toggle_cursor,
-        // player_check_ground_system_with_raycast,
-        // player_check_ground_system,
+        update_inventory_ui_system
 
     );
 
     let game_systems = (
             update_jump_state_system,
             player_movement_system,
+            check_item_intersections,
+            change_selected_item_system,
+            use_item_system,
+            speed_boost_system
         ).chain();
 
     App::new()
@@ -84,7 +88,7 @@ fn main() {
         .insert_resource(WorldAttribute::default())
         .init_resource::<CameraState>()
         .init_resource::<GameState>()
-        .add_systems(Startup, (maximize_window, setup, hide_cursor))
+        .add_systems(Startup, (maximize_window, setup, hide_cursor, spawn_items))
         .add_systems(Startup, (setup_debug_ui, setup_game_ui).chain())
         .add_systems(Update, all_systems)
         .add_systems(Update, game_systems)

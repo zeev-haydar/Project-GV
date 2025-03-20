@@ -98,6 +98,7 @@ impl Inventory {
         }
     }
 
+    /// Use the selected item and remove them
     pub fn use_item(&mut self, player: &mut PlayerStats, commands: &mut Commands, entity: Entity) {
         if let Some(item) = self.slots[self.current_selected_item].take() {
             match item.effect {

@@ -18,11 +18,11 @@ pub fn spawn_ground(
             base_color: attributes.ground_color,
             ..Default::default()
         })),
-        Collider::cuboid(width / 2., 1., height / 2.),
+        Collider::cuboid(width / 2., 0.25, height / 2.),
         RigidBody::Fixed,
         Ground, // a component to tag this entity as ground
         AabbCollider {
-            half_extents: Vec3::new(width / 2.0, 0.5, height / 2.0),
+            half_extents: Vec3::new(width / 2.0, 0.125, height / 2.0),
         }
     ));
 }
