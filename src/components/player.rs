@@ -1,5 +1,7 @@
 /* player.rs */
 use bevy::prelude::*;
+use bevy_rapier3d::prelude::*;
+use crate::components::world::ThrewObject;
 
 #[derive(Component)]
 pub struct Player;
@@ -24,6 +26,19 @@ pub struct PlayerStats {
     pub(crate) speed: f32,
 }
 
+#[derive(Component)]
+pub struct Direction {
+    pub(crate) direction: Vec3
+}
+
+impl Default for Direction {
+    fn default() -> Self {
+        Self {
+            direction: Vec3::ZERO
+        }
+    }
+}
+
 impl Default for PlayerStats {
     fn default() -> Self {
         Self { health: 100.0, speed: 15.0 }
@@ -41,7 +56,7 @@ pub enum ItemType {
 pub enum ItemEffect {
     IncreaseSpeed { amount: f32, duration: f32 }, // Increase movement speed
     Heal(f32),         // Restore health
-    Throw(Vec3),       // Throw in a direction
+    Throw(Handle<Mesh>, Handle<StandardMaterial>),       // Throw in a direction
     MeleeAttack(u32),  // Melee attack with durability
 }
 
@@ -59,11 +74,20 @@ pub struct Item {
     pub effect: ItemEffect,
 }
 
+#[derive(Component, Clone)]
+pub struct Weapon {
+    pub name: String,
+    pub description: String,
+    pub throwable: bool,
+    pub durability: u16
+}
+
 /// Define the Inventory component with exactly 5 slots.
 #[derive(Component)]
 pub struct Inventory {
     /// Each slot can hold an item or be empty.
     pub slots: [Option<Item>; 5],
+    pub weapon: Option<Weapon>,
     pub current_selected_item: usize,
 }
 
@@ -72,7 +96,8 @@ impl Inventory {
     pub fn new() -> Self {
         Self {
             slots: [None, None, None, None, None],
-            current_selected_item: 0
+            current_selected_item: 0,
+            weapon: None
         }
     }
 
@@ -99,7 +124,7 @@ impl Inventory {
     }
 
     /// Use the selected item and remove them
-    pub fn use_item(&mut self, player: &mut PlayerStats, commands: &mut Commands, entity: Entity) {
+    pub fn use_item(&mut self, player: &mut PlayerStats, transform: Option<Mut<Transform>>, direction: Option<&Direction>, commands: &mut Commands, entity: Entity, time: &Res<Time>) {
         if let Some(item) = self.slots[self.current_selected_item].take() {
             match item.effect {
                 ItemEffect::IncreaseSpeed { amount, duration } => {
@@ -117,9 +142,43 @@ impl Inventory {
                     player.health += amount;
                     println!("Healed by {}", amount);
                 }
-                ItemEffect::Throw(direction) => {
-                    println!("Item thrown in direction {:?}", direction);
-                    // Implement logic to spawn a thrown object
+                ItemEffect::Throw(
+                                  handle_mesh,
+                                  handle_material
+                ) => {
+                    let Some(direction) = direction else {
+                        return;
+                    };
+                    let Some(origin) = transform else {
+                        return;
+                    };
+                    println!("Item thrown in direction {:?}", direction.direction);
+                    // spawn thrown object
+                    let speed = 30f32;
+                    commands.spawn(
+                        (
+                                Velocity {
+                                    linvel: speed * direction.direction,
+                                        ..Default::default()
+                                },
+                                CollisionGroups::new(
+                                    Group::GROUP_3,
+                                    Group::GROUP_1 | Group::GROUP_2,
+                                ),
+                                ActiveEvents::COLLISION_EVENTS,
+                                ThrewObject {
+                                    spawn_time: time.elapsed_secs()
+                                },
+                                RigidBody::Dynamic,
+                                GravityScale(1.0),
+                                Transform::from_translation(origin.translation + Vec3::from((direction.direction.x, 1., direction.direction.z))),
+                                Collider::ball(0.5),
+                                Mesh3d(handle_mesh),
+                                MeshMaterial3d(handle_material),
+                                Sensor
+                            )
+                    );
+
                 }
                 ItemEffect::MeleeAttack(durability) => {
                     println!("Attacked with melee weapon, durability left: {}", durability);

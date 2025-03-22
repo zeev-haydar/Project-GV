@@ -22,8 +22,8 @@ pub fn toggle_camera_mode_system(
 // Unified camera system
 pub fn camera_system(
     camera_state: ResMut<CameraState>,
-    mut player_query: Query<(&mut Transform, &CameraSensitivity), With<Player>>,
-    mut camera_query: Query<&mut Transform, (With<PlayerCamera>, Without<Player>)>,
+    mut player_query: Query<(&mut Transform, &CameraSensitivity, &mut Direction), With<Player>>,
+    mut camera_query: Query<(&mut Transform, &GlobalTransform), (With<PlayerCamera>, Without<Player>)>,
     mouse_input: Res<ButtonInput<MouseButton>>,
     accumulated_mouse_motion: Res<AccumulatedMouseMotion>,
     time: Res<Time>,
@@ -35,7 +35,7 @@ pub fn camera_system(
 
     // Process horizontal rotation for the player (yaw)
     let delta_yaw = -delta.x * player_query.single().1.x; // using the sensitivity.x
-    let (mut player_transform, camera_sensitivity) = match player_query.get_single_mut() {
+    let (mut player_transform, camera_sensitivity, mut direction) = match player_query.get_single_mut() {
         Ok(data) => data,
         Err(_) => return,
     };
@@ -47,7 +47,7 @@ pub fn camera_system(
 
     // Process vertical rotation for the camera (pitch)
     let delta_pitch = -delta.y * camera_sensitivity.y; // using the sensitivity.y
-    let mut camera_transform = match camera_query.get_single_mut() {
+    let  (mut camera_transform, camera_global_transform) = match camera_query.get_single_mut() {
         Ok(transform) => transform,
         Err(_) => return,
     };
@@ -60,4 +60,7 @@ pub fn camera_system(
     current_pitch = current_pitch.clamp(-PITCH_LIMIT, PITCH_LIMIT);
     // Apply only the pitch rotation to the camera (no yaw or roll)
     camera_transform.rotation = Quat::from_euler(EulerRot::YXZ, 0.0, current_pitch, 0.0);
+
+    // update the direction by using the global transform of camera
+    direction.direction = camera_global_transform.rotation() *Vec3::NEG_Z;
 }

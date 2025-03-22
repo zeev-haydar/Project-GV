@@ -42,6 +42,13 @@ pub fn setup_debug_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                 TextColor(ORANGE.into()),
                 InfoText { info: Info::FPS },
             ));
+
+            parent.spawn((
+                Text::new("Direction"),
+                text_font.clone(),
+                TextColor(ORANGE.into()),
+                InfoText { info: Info::Direction },
+            ));
         });
 }
 

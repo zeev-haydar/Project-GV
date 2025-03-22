@@ -52,8 +52,8 @@ fn main() {
         toggle_camera_mode_system,
         update_player_info_system,
         toggle_cursor,
-        update_inventory_ui_system
-
+        update_inventory_ui_system,
+        threw_item_system
     );
 
     let game_systems = (

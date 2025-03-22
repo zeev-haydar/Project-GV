@@ -3,7 +3,7 @@ use bevy::diagnostic::{Diagnostics, DiagnosticsStore, FrameTimeDiagnosticsPlugin
 use bevy::image::*;
 use bevy::prelude::*;
 use bevy::render::camera::RenderTarget::Image;
-use crate::components::player::{Inventory, Player};
+use crate::components::player::{Direction, Inventory, Player};
 use crate::components::ui::{FpsText, Info, InfoText, InventorySlot, InventorySlotImage};
 
 // pub fn update_debug_info_system(
@@ -23,17 +23,22 @@ use crate::components::ui::{FpsText, Info, InfoText, InventorySlot, InventorySlo
 
 pub fn update_player_info_system(
     mut info_text_query: Query<(&mut Text, &InfoText), With<InfoText>>,
-    player_query: Query<&Transform, With<Player>>,
+    player_query: Query<(&Transform, &Direction), With<Player>>,
     diagnostics: Res<DiagnosticsStore>,
 ) {
     for (mut text, info_text) in info_text_query.iter_mut() {
         match info_text.info {
             Info::Position => {
-                if let Ok(transform) = player_query.get_single() {
+                if let Ok((transform, _)) = player_query.get_single() {
                     update_position_text(&mut text, &transform)
                 }
             },
             Info::FPS => update_fps_text(&mut text, &diagnostics),
+            Info::Direction => {
+                if let Ok((_, direction)) = player_query.get_single() {
+                    update_direction_text(&mut text, &direction.direction)
+                }
+            }
         }
     }
 }
@@ -45,6 +50,13 @@ fn update_position_text(text: &mut Text, transform: &Transform) {
         transform.translation.y,
         transform.translation.z
     ));
+}
+
+fn update_direction_text(text: &mut Text, direction: &Vec3) {
+    set_text(text, format!(
+        "Direction = {:.2} {:.2} {:.2}",
+        direction.x, direction.y, direction.z
+    ))
 }
 
 /// Updates text for FPS

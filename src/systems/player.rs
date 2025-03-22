@@ -84,11 +84,12 @@ pub fn player_movement_system(
 pub fn use_item_system(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut commands: Commands,
-    mut player_query: Query<(Entity, &mut Inventory, &mut PlayerStats), With<Player>>,
+    time: Res<Time>,
+    mut player_query: Query<(Entity, &mut Inventory, &mut PlayerStats, Option<&mut Transform>, Option<&Direction>), With<Player>>,
 ) {
-    for (entity, mut inventory, mut player_stats) in player_query.iter_mut() {
+    for (entity, mut inventory, mut player_stats, transform, direction) in player_query.iter_mut() {
         if keyboard_input.just_pressed(KeyCode::KeyE) {
-            inventory.use_item(&mut player_stats, &mut commands, entity);
+            inventory.use_item(&mut player_stats, transform, direction, &mut commands, entity, &time);
         }
     }
 }
@@ -239,6 +240,48 @@ pub fn check_item_intersections(
                         }
                     }
                 }
+            }
+            _ => {}
+        }
+    }
+}
+
+pub fn threw_item_system(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut threw_item_query: Query<(Entity, &ThrewObject)>,
+    ground_query: Query<(Entity, &Ground)>,
+    mut player_query: Query<(Entity, &mut PlayerStats), With<Player>>,
+    mut collider_events: EventReader<CollisionEvent>,
+) {
+    let current_time = time.elapsed_secs(); // Get the current game time
+
+    for (entity, threw_object) in threw_item_query.iter_mut() {
+        // Check if the object has been alive for more than 5 seconds
+        if current_time - threw_object.spawn_time > 5.0 {
+            println!("Threw Object {} despawned due to timeout", entity);
+            commands.entity(entity).despawn_recursive();
+            continue;
+        }
+    }
+
+    for event in collider_events.read() {
+        match event {
+            CollisionEvent::Started(entity1, entity2, flag)
+                if *flag == CollisionEventFlags::SENSOR  => {
+
+                        if let Ok((threw_object_entity, threw_object)) = threw_item_query.get(*entity1) {
+                            // if let Ok((player_entity, player_stats)) = player_query.get_mut(*entity2) {
+                            //     println!("Threw Object {} hit player {}", threw_object_entity, player_entity);
+                            //
+                            //     // destroy the object
+                            //     commands.entity(threw_object_entity).despawn_recursive();
+                            // }
+                            if let Ok((ground_entity, _)) = ground_query.get(*entity2) {
+                                println!("Threw Object {} hit ground {}", threw_object_entity, ground_entity);
+                                commands.entity(threw_object_entity).despawn_recursive();
+                            }
+                    }
             }
             _ => {}
         }

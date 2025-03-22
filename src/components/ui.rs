@@ -4,6 +4,7 @@ use bevy::prelude::Component;
 pub enum Info {
     Position,
     FPS,
+    Direction,
 }
 
 #[derive(Debug, Component)]

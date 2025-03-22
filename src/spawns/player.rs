@@ -1,5 +1,5 @@
 use crate::components::camera::{CameraSensitivity, PlayerCamera};
-use crate::components::player::{Inventory, JumpAbility, Player, PlayerStats};
+use crate::components::player::{Direction, Inventory, JumpAbility, Player, PlayerStats};
 use crate::components::world::EntityName;
 use bevy::color::palettes::css::RED;
 use bevy::prelude::*;
@@ -63,11 +63,13 @@ pub fn spawn_player(
         .insert(Inventory::new())
         .insert(CollisionGroups::new(
             Group::GROUP_1,
-            Group::GROUP_2,
+            Group::GROUP_2 | Group::GROUP_3,
         ))
+        .insert(Direction::default())
         .with_children(|parent| {
             parent.spawn((
                 Transform::from_xyz(0., 1.5, 0.),
+                GlobalTransform::default(),
                 PlayerCamera,
                 Camera3d::default(),
                 Projection::from(PerspectiveProjection {
