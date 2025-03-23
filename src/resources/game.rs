@@ -38,11 +38,10 @@ impl Default for WorldAttribute {
         WorldAttribute {
             width: 100.,
             height: 100.,
-            wall_height: 10.,
+            wall_height: 50.,
             wall_thickness: 5.,
             wall_color: Color::from(MAROON),
             ground_color: Color::from(LIME_200)
-
         }
     }
 }
