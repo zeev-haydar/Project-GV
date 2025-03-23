@@ -1,8 +1,8 @@
 use crate::components::{player::*, world::*};
 // use crate::resources::game::GameState;
 // use crate::resources::DebugPrintTimer;
-use bevy::input::ButtonInput;
-use bevy::input::mouse::{MouseScrollUnit, MouseWheel};
+use bevy::input::{ButtonInput, ButtonState};
+use bevy::input::mouse::{MouseButtonInput, MouseScrollUnit, MouseWheel};
 use bevy::math::Vec3;
 use bevy::prelude::*;
 use bevy::text::cosmic_text::Scroll;
@@ -121,6 +121,43 @@ pub fn change_selected_item_system(
     }
 }
 
+pub fn melee_system (
+    mut mouse_input: EventReader<MouseButtonInput>,
+    mut inventory_query: Query<&mut Inventory, With<Player>>,
+) {
+    for event in mouse_input.read() {
+        match (event.button, event.state)  {
+            (MouseButton::Left, ButtonState::Pressed) => {
+                if let Ok(mut inventory) = inventory_query.get_single_mut() {
+                    if let Some(ref mut weapon) = inventory.weapon {
+                        weapon.decrement_durability();
+                        println!("Weapon durability: {}", weapon.durability);
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+pub fn check_weapon_durability_system(
+    mut inventory_query: Query<&mut Inventory, With<Player>>,
+) {
+    let Ok(mut inventory) = inventory_query.get_single_mut() else {
+        return;
+    };
+
+    // check if the durability of the weapon is zero
+    if let Some(weapon) = &inventory.weapon {
+        if weapon.durability == 0 {
+            // Set the weapon to None
+            inventory.weapon = None;
+            println!("Weapon broken and removed from inventory!");
+        }
+    }
+}
+
+
 pub fn speed_boost_system(
     mut commands: Commands,
     time: Res<Time>,
@@ -200,45 +237,17 @@ pub fn check_item_intersections(
     for event in collider_events.read() {
         match event {
             CollisionEvent::Started(entity1, entity2, flag) if *flag == CollisionEventFlags::SENSOR => {
-                if let Ok((_, _, _, player_name,_, mut inventory)) =
-                    player_query.get_mut(*entity1)
+                // Try player as entity1 and item as entity2
+                if let Some((player_name, mut inventory, item_entity, item)) =
+                    try_get_player_and_item(*entity1, *entity2, &mut player_query, &mut item_query)
                 {
-                    if let Ok((item_entity, item, _)) = item_query.get_mut(*entity2) {
-                        println!("Player {:?} collided with item '{}'", player_name, item.name);
-
-                        // Pick up  the item
-                        match inventory.add_item(item.clone()) {
-                            Ok(())=> {
-                                println!("Item '{}' added to inventory.", item.name);
-
-                                // Remove item from the world
-                                commands.entity(item_entity).despawn_recursive();
-                            }
-                            Err(_) => {
-                                println!("Inventory is full!");
-                            }
-                        }
-                    }
+                    handle_item_pickup(&mut commands, player_name, &mut inventory, item_entity, item);
                 }
-                else if let Ok((_player_entity, _player_transform, _player, player_name, mut _player_stats, mut inventory)) =
-                    player_query.get_mut(*entity2)
+                // Try player as entity2 and item as entity1
+                else if let Some((player_name, mut inventory, item_entity, item)) =
+                    try_get_player_and_item(*entity2, *entity1, &mut player_query, &mut item_query)
                 {
-                    if let Ok((item_entity, item, item_transform)) = item_query.get_mut(*entity1) {
-                        println!("Player {:?} collided with item '{}'", player_name, item.name);
-
-                        // Pick up the item
-                        match inventory.add_item(item.clone()) {
-                            Ok(())=> {
-                                println!("Item '{}' added to inventory.", item.name);
-
-                                // Remove item from the world
-                                commands.entity(item_entity).despawn_recursive();
-                            }
-                            Err(_) => {
-                                println!("Inventory is full!");
-                            }
-                        }
-                    }
+                    handle_item_pickup(&mut commands, player_name, &mut inventory, item_entity, item);
                 }
             }
             _ => {}
@@ -287,3 +296,45 @@ pub fn threw_item_system(
         }
     }
 }
+
+// HELPER FUNCTION
+
+/// Helper function to check if a player and item are involved in a collision
+fn try_get_player_and_item<'a>(
+    player_entity: Entity,
+    item_entity: Entity,
+    mut player_query: &'a mut Query<(Entity, &Transform, &Player, &EntityName, &mut PlayerStats, &mut Inventory)>,
+    mut item_query: &'a mut Query<(Entity, &Item, &Transform)>,
+) -> Option<(&'a EntityName, Mut<'a, Inventory>, Entity, &'a Item)> {
+    if let Ok((_, _, _, player_name, _, mut inventory)) = player_query.get_mut(player_entity) {
+        if let Ok((item_entity, item, _)) = item_query.get_mut(item_entity) {
+            return Some((player_name, inventory, item_entity, item));
+        }
+    }
+    None
+}
+
+/// Helper function to handle item pickup logic
+fn handle_item_pickup(
+    commands: &mut Commands,
+    player_name: &EntityName,
+    inventory: &mut Mut<Inventory>,
+    item_entity: Entity,
+    item: &Item,
+) {
+    println!("Player {:?} collided with item '{}'", player_name, item.name);
+
+    // Pick up the item
+    match inventory.add_item(item.clone()) {
+        Ok(()) => {
+            println!("Item '{}' added to inventory.", item.name);
+
+            // Remove item from the world
+            commands.entity(item_entity).despawn_recursive();
+        }
+        Err(_) => {
+            println!("Inventory is full!");
+        }
+    }
+}
+

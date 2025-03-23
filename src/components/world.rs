@@ -36,6 +36,11 @@ pub struct AabbCollider {
     pub half_extents: Vec3,
 }
 
+#[derive(Component)]
+pub struct ThrewObject {
+    pub spawn_time: f32, // Stores the time the object was spawned
+}
+
 // pub fn ray_intersect_aabb(
 //     ray_origin: Vec3,
 //     ray_direction: Vec3,
@@ -158,7 +163,3 @@ pub fn multi_ray_intersect_from_box(
     closest_intersection
 }
 
-#[derive(Component)]
-pub struct ThrewObject {
-    pub spawn_time: f32, // Stores the time the object was spawned
-}

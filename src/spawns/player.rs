@@ -79,11 +79,3 @@ pub fn spawn_player(
             ));
         });
 }
-
-pub fn spawn_random_item(
-    commands: &mut Commands,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
-) {
-
-}

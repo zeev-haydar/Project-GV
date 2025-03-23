@@ -49,6 +49,7 @@ impl Default for PlayerStats {
 pub enum ItemType {
     Passive,
     Active,
+    Weapon,
 }
 
 /// The effect of an item when used
@@ -57,7 +58,7 @@ pub enum ItemEffect {
     IncreaseSpeed { amount: f32, duration: f32 }, // Increase movement speed
     Heal(f32),         // Restore health
     Throw(Handle<Mesh>, Handle<StandardMaterial>),       // Throw in a direction
-    MeleeAttack(u32),  // Melee attack with durability
+    WeaponItem(Weapon),  // Melee attack with durability
 }
 
 #[derive(Component)]
@@ -80,6 +81,12 @@ pub struct Weapon {
     pub description: String,
     pub throwable: bool,
     pub durability: u16
+}
+
+impl Weapon {
+    pub fn decrement_durability(&mut self) {
+        self.durability = self.durability.saturating_sub(1);
+    }
 }
 
 /// Define the Inventory component with exactly 5 slots.
@@ -124,7 +131,13 @@ impl Inventory {
     }
 
     /// Use the selected item and remove them
-    pub fn use_item(&mut self, player: &mut PlayerStats, transform: Option<Mut<Transform>>, direction: Option<&Direction>, commands: &mut Commands, entity: Entity, time: &Res<Time>) {
+    pub fn use_item(&mut self,
+                    player: &mut PlayerStats,
+                    transform: Option<Mut<Transform>>,
+                    direction: Option<&Direction>,
+                    commands: &mut Commands,
+                    entity: Entity,
+                    time: &Res<Time>) {
         if let Some(item) = self.slots[self.current_selected_item].take() {
             match item.effect {
                 ItemEffect::IncreaseSpeed { amount, duration } => {
@@ -180,12 +193,9 @@ impl Inventory {
                     );
 
                 }
-                ItemEffect::MeleeAttack(durability) => {
-                    println!("Attacked with melee weapon, durability left: {}", durability);
-                    if durability > 1 {
-                        self.slots[self.current_selected_item] =
-                            Some(Item { effect: ItemEffect::MeleeAttack(durability - 1), ..item });
-                    }
+                ItemEffect::WeaponItem(weapon) => {
+                    // insert this bruh to weapon slot
+                    self.weapon = Some(weapon);
                 }
             }
         }

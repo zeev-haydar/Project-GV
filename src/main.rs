@@ -12,7 +12,7 @@ use crate::spawns::player::spawn_player;
 use crate::spawns::ui::{setup_debug_ui, setup_game_ui};
 use crate::systems::camera::*;
 use crate::systems::player::*;
-use crate::systems::ui::{update_inventory_ui_system, update_player_info_system};
+use crate::systems::ui::{update_durability_text_system, update_inventory_ui_system, update_player_info_system};
 use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
@@ -53,12 +53,15 @@ fn main() {
         update_player_info_system,
         toggle_cursor,
         update_inventory_ui_system,
+        update_durability_text_system,
         threw_item_system
     );
 
     let game_systems = (
             update_jump_state_system,
             player_movement_system,
+            melee_system,
+            check_weapon_durability_system,
             check_item_intersections,
             change_selected_item_system,
             use_item_system,

@@ -2,7 +2,7 @@ use bevy::color::palettes::tailwind::*;
 use bevy::prelude::*;
 use bevy_rapier3d::prelude::*;
 
-use crate::components::player::{Item, ItemEffect, ItemType, SpeedBoost};
+use crate::components::player::{Item, ItemEffect, ItemType, SpeedBoost, Weapon};
 use crate::components::world::ThrewObject;
 
 #[derive(Bundle, Clone)]
@@ -53,6 +53,7 @@ pub fn spawn_items(
         Vec3::new(-15.0, 0.75, 15_f32),
         Vec3::new(15.0, 0.75, -15_f32),
         Vec3::new(-35.0, 0.75, 30_f32),
+        Vec3::new(25.0, 0.75, -25_f32),
     ];
 
     let mesh = meshes.add(Sphere::new(0.5));
@@ -63,6 +64,11 @@ pub fn spawn_items(
 
     let throw_item_material = materials.add(StandardMaterial {
         base_color: Color::from(GREEN_400),
+        ..default()
+    });
+
+    let melee_weapon_material = materials.add(StandardMaterial {
+        base_color: Color::from(CYAN_400),
         ..default()
     });
     // spawn the items
@@ -100,4 +106,26 @@ pub fn spawn_items(
         CollisionGroups::new(Group::GROUP_2, Group::GROUP_1),
         ActiveCollisionTypes::default() | ActiveCollisionTypes::KINEMATIC_STATIC,
     ));
+
+    // spawn melee weapon item
+    commands.spawn((
+        Transform::from_translation(spawn_positions[3]),
+        Mesh3d(mesh.clone()),
+        Collider::ball(0.5),
+        MeshMaterial3d(melee_weapon_material.clone()),
+        Item {
+            name: "Celurit".into(),
+            description: String::from("Senggol Bacok"),
+            type_: ItemType::Weapon,
+            effect: ItemEffect::WeaponItem(Weapon {
+                name: String::from("Celurit"),
+                description: String::from("Senggol Bacok"),
+                throwable: false,
+                durability: 5
+            })
+        },
+        Sensor::default(),
+        CollisionGroups::new(Group::GROUP_2, Group::GROUP_1),
+        ActiveCollisionTypes::default() | ActiveCollisionTypes::KINEMATIC_STATIC,
+        ));
 }

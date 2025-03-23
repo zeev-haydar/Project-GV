@@ -1,5 +1,6 @@
 use crate::components::ui::*;
 use bevy::color::palettes::css::ORANGE;
+use bevy::color::palettes::tailwind::BLUE_300;
 use bevy::prelude::*;
 
 pub fn setup_debug_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -127,5 +128,31 @@ pub fn setup_game_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
                     InventorySlot {slot}
                 ));
             }
+        });
+
+    // Spawn weapon slot
+    commands
+        .spawn(Node {
+            position_type: PositionType::Absolute,
+            bottom: Val::Px(10.),
+            left: Val::Px(10.),
+            display: Display::Flex,
+            flex_direction: FlexDirection::Row,
+            ..default()
+        })
+        .with_children(|parent| {
+            parent.spawn((
+                Node {
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    width: Val::Px(50.),
+                    height: Val::Px(50.),
+                    border: UiRect::all(Val::Px(2.5)),
+                    ..Default::default()
+                },
+                BackgroundColor(Color::srgba(0.2, 0.2, 0.2, 0.5).into()),
+                BorderColor(Color::from(BLUE_300)),
+                WeaponSlot
+            ));
         });
 }

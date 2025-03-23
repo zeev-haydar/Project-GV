@@ -28,3 +28,12 @@ pub struct InventorySlot {
 /// Marker for the item image inserted into an inventory slot.
 #[derive(Component)]
 pub struct InventorySlotImage;
+
+#[derive(Component)]
+pub struct WeaponSlot;
+
+#[derive(Component)]
+pub struct WeaponSlotImage;
+
+#[derive(Component)]
+pub struct WeaponDurabilityText;
