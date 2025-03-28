@@ -6,8 +6,8 @@ use crate::states::*;
 /// All state available at Menu
 #[derive(Clone, Copy, Eq, Default, PartialEq, Debug, Hash, States)]
 enum MenuState {
-    Main,
     #[default]
+    Main,
     Disabled
 }
 
@@ -29,23 +29,22 @@ struct SelectedOption;
 
 pub fn menu_plugin(app: &mut App) {
     app.
-        init_state::<MenuState::Main>()
+        init_state::<MenuState>()
         .add_systems(OnEnter(GameState::Menu), menu_setup)
         .add_systems(OnEnter(MenuState::Main), main_menu_setup)
-        .add_systems(OnExit(MenuState::Main), despawn_screen::<OnMainMenuScreen>)
+        .add_systems(OnExit(MenuState::Main), (despawn_screen::<OnMainMenuScreen>, despawn_screen::<Camera>))
         .add_systems(Update, (menu_actions).run_if(in_state(GameState::Menu)));
 }
 
-fn menu_setup(mut commands: &mut Commands, mut menu_state: ResMut<NextState<MenuState>>) {
+fn menu_setup(mut commands: Commands, mut menu_state: ResMut<NextState<MenuState>>) {
     menu_state.set(MenuState::Main);
-    commands.spawn(Camera3d::default());
 }
 
 fn main_menu_setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) {
-    let font_handler = asset_server.load("fonts/OpenSans-Bold.ttf");
+    let font_handler = asset_server.load("fonts/OpenSans.ttf");
 
     let button_font = TextFont {
         font_size: 32.0,
@@ -106,6 +105,7 @@ fn spawn_button(mut builder: &mut ChildBuilder, text: String, font: TextFont, me
                     max_height: Val::Percent(100f32/NUMBER_OF_BUTTONS.to_float_sample()),
                     align_items: AlignItems::Center,
                     justify_content: JustifyContent::Center,
+                    margin: UiRect::all(Val::Px(20.0)),
                     ..default()
                 },
                 Button,

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
-mod game;
-mod menu;
+pub mod game;
+pub mod menu;
 
 #[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
 pub enum GameState {
