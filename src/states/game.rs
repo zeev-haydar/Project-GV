@@ -1,9 +1,5 @@
 use std::time::Duration;
-use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
 use bevy::prelude::*;
-use bevy::window::{PresentMode, PrimaryWindow, WindowMode};
-use bevy_rapier3d::plugin::{NoUserData, RapierPhysicsPlugin};
-use bevy_rapier3d::prelude::RapierDebugRenderPlugin;
 use crate::resources::camera::CameraState;
 use crate::resources::DebugPrintTimer;
 use crate::resources::game::WorldAttribute;
@@ -14,19 +10,14 @@ use crate::spawns::player::spawn_player;
 use crate::spawns::structures::spawn_boxes;
 use crate::spawns::ui::{setup_debug_ui, setup_game_ui};
 use crate::spawns::wall::spawn_wall;
+use crate::states::*;
 use crate::systems::camera::{camera_system, toggle_camera_mode_system};
 use crate::systems::player::{change_selected_item_system, check_item_intersections, check_weapon_durability_system, melee_system, player_movement_system, speed_boost_system, threw_item_system, update_jump_state_system, use_item_system};
 use crate::systems::ui::{update_durability_text_system, update_inventory_ui_system, update_player_info_system};
 use crate::systems::window::{hide_cursor, toggle_cursor};
 
-fn maximize_window(mut windows: Query<&mut Window, With<PrimaryWindow>>) {
-    if let Ok(mut window) = windows.get_single_mut() {
-        window.set_maximized(true);
-    }
 
-}
-
-pub fn setup(
+pub fn game_setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
@@ -41,7 +32,7 @@ pub fn setup(
 }
 
 
-fn game_plugin(
+pub fn game_plugin(
     app: &mut App,
 ) {
     let all_systems = (
@@ -73,19 +64,14 @@ fn game_plugin(
         .insert_resource(ClearColor(Color::srgb_u8(127, 127, 127)))
         .insert_resource(WorldAttribute::default())
         .init_resource::<CameraState>()
-        .add_systems(Startup, (crate::maximize_window, crate::setup, hide_cursor, spawn_items))
-        .add_systems(Startup, (setup_debug_ui, setup_game_ui).chain())
-        .add_systems(Update, all_systems)
-        .add_systems(Update, game_systems);
+        .add_systems(OnEnter(GameState::Game), (game_setup, hide_cursor, spawn_items))
+        .add_systems(OnEnter(GameState::Game), (setup_debug_ui, setup_game_ui).chain())
+        .add_systems(Update, all_systems.run_if(in_state(GameState::Game)))
+        .add_systems(Update, game_systems.run_if(in_state(GameState::Game)))
+        .add_systems(OnExit(GameState::Game), despawn_screen::<OnGameScreen>);
 }
 
 #[derive(Component)]
 struct OnGameScreen;
 
 
-// Generic system that takes a component as a parameter, and will despawn all entities with that component
-fn despawn_screen<T: Component>(to_despawn: Query<Entity, With<T>>, mut commands: Commands) {
-    for entity in &to_despawn {
-        commands.entity(entity).despawn_recursive();
-    }
-}
