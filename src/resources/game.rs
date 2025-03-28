@@ -2,22 +2,6 @@ use bevy::color::palettes::css::MAROON;
 use bevy::color::palettes::tailwind::LIME_200;
 use bevy::prelude::*;
 
-/**
-GameState store information about game state.
- */
-#[derive(Debug, Resource)]
-pub struct GameState {
-    pub position: Vec3,
-}
-
-impl Default for GameState {
-    fn default() -> Self {
-        GameState {
-            position: Vec3::ZERO,
-        }
-    }
-}
-
 // WorldAttribute for world environment parameter
 
 /**
@@ -38,7 +22,7 @@ impl Default for WorldAttribute {
         WorldAttribute {
             width: 100.,
             height: 100.,
-            wall_height: 50.,
+            wall_height: 25.,
             wall_thickness: 5.,
             wall_color: Color::from(MAROON),
             ground_color: Color::from(LIME_200)

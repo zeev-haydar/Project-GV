@@ -209,15 +209,29 @@ pub fn update_jump_state_system(
 
         // Check each ground entity.
         for (ground_transform, ground_collider) in ground_query.iter() {
-            if let Some(t) = multi_ray_intersect_from_box(
+            // if let Some(t) = multi_ray_intersect_from_box(
+            //     player_transform.translation,
+            //     player_half_extents,
+            //     ground_transform.translation,
+            //     ground_collider.half_extents,
+            //     0.025,
+            //     ray_direction,
+            // ) {
+            //     // println!("Ray hit at distance: {}", t);
+            //     if t >= 0.0 && t <= ray_length {
+            //         grounded = true;
+            //         break;
+            //     }
+            // }
+            if let Some(t) = slab_ray_intersect_aabb(
                 player_transform.translation,
                 player_half_extents,
                 ground_transform.translation,
                 ground_collider.half_extents,
-                0.025,
-                ray_direction,
+                Vec3::NEG_Y, // Downward ray
+                0.1f32
             ) {
-                // println!("Ray hit at distance: {}", t);
+                // println!("Hit detected at distance: {}", t);
                 if t >= 0.0 && t <= ray_length {
                     grounded = true;
                     break;
@@ -261,6 +275,7 @@ pub fn threw_item_system(
     mut threw_item_query: Query<(Entity, &ThrewObject)>,
     ground_query: Query<(Entity, &Ground)>,
     mut player_query: Query<(Entity, &mut PlayerStats), With<Player>>,
+    wall_query: Query<(Entity, &Wall)>,
     mut collider_events: EventReader<CollisionEvent>,
 ) {
     let current_time = time.elapsed_secs(); // Get the current game time
@@ -288,6 +303,10 @@ pub fn threw_item_system(
                             // }
                             if let Ok((ground_entity, _)) = ground_query.get(*entity2) {
                                 println!("Threw Object {} hit ground {}", threw_object_entity, ground_entity);
+                                commands.entity(threw_object_entity).despawn_recursive();
+                            }
+                            else if let Ok((wall_entity, _)) =  wall_query.get(*entity2) {
+                                println!("Threw Object {} hit wall {}", threw_object_entity, wall_entity);
                                 commands.entity(threw_object_entity).despawn_recursive();
                             }
                     }
